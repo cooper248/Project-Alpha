@@ -31,8 +31,7 @@ public:
 };
 
 // Following function: 'pullArm' copied directly from wiki - Box Muller Transform - No credit taken
-double pullValue(double mu, double sigma)
-{
+double pullValue(double mu, double sigma){
     const double epsilon = std::numeric_limits<double>::min();
     const double two_pi = 2.0*3.14159265358979323846;
     
@@ -62,11 +61,10 @@ void arm::createArm(double mu, double sigma){
     learner = 0;
 };
 
-void startProgram(vector<arm> *allArms,int *numArms)
-{
+void startProgram(vector<arm> *allArms,int *numArms){
     srand(time(NULL));
-    int generous=5;
-    int loose = 30;
+    int generous=30;
+    int loose = 15;
     int setMuRange = 50.0;
 
     cout<< "How many arms would you like to create for this saucy little bandit? ";
@@ -96,13 +94,13 @@ void pullArm(vector<arm> *allArms,int *numArms){
     cout<<"You made "<< result << "dollars." << endl;
 };
 
-void checkArms(int *numArms, vector<arm> *allArms, vector<vector<double>>*allPullValues){
+void checkArms(int *numArms,int*iterations, vector<arm> *allArms, vector<vector<double>>*allPullValues){
     
-    int iterations = 100;
+    *iterations = 100;
     for(int i=0; i<*numArms; i++)
     {
         vector<double> pullValues;
-        for(int j=0; j<=iterations; j++)
+        for(int j=0; j<=*iterations; j++)
         {
             double result= pullValue(allArms->at(i).arm::muValue,allArms->at(i).arm::sigmaValue);
             pullValues.push_back(result);
@@ -111,39 +109,31 @@ void checkArms(int *numArms, vector<arm> *allArms, vector<vector<double>>*allPul
     }
 };
 
-void printValues(vector<vector<double>> &allPullValues){
+void printValues(int * iterations, vector<vector<double>> *allPullValues){
 
-    for(int i =0;i<allPullValues[i].size();i++){
-        for(int j=0;j<=5;j++){
-            cout<<allPullValues[i][j] << " / ";
+    for(int i =0;i<allPullValues->size();i++){
+        for(int j=0;j<*iterations;j++){
+            cout<<allPullValues->at(i)[j] << " / ";
         }
         cout<< endl << "Next set "<< endl << endl;
     }
-    
 };
 
-int main() {
+int main(){
     // Create Variables
     vector<arm> allArms;
     vector<vector<double>> allPullValues;
     int numArms;
+    int iterations;
     char yesNo;
     
     // Function to prompt user and create all arms
     startProgram(&allArms, &numArms);
-    checkArms(&numArms,&allArms, &allPullValues);
-    //printValues(allPullValues);
+    checkArms(&numArms,&iterations,&allArms, &allPullValues);
+    printValues(&iterations, &allPullValues);
     
     
-    //Print all values
-    for(int i =0;i<allPullValues.size();i++){
-        for(int j=0;j<allPullValues.at(i).size();j++){
-            cout<<allPullValues[i][j] << " / ";
-        }
-        cout<< endl << "Next set "<< endl << endl;
-    }
-    
-  while(yesNo!='n'&&yesNo!='N'){
+    while(yesNo!='n'&&yesNo!='N'){
     pullArm(&allArms, &numArms);
     cout<< "Would you like to choose another arm? type Y or N ";
         cin>>yesNo;
