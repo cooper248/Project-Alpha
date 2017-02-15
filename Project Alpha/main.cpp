@@ -58,7 +58,7 @@ double pullValue(double mu, double sigma){
 void arm::createArm(double mu, double sigma){
     muValue = mu;
     sigmaValue = sigma;
-    learner = 0;
+    learner = 1-crRand+crRand;
 };
 
 void startProgram(vector<arm> *allArms,int *numArms){
@@ -72,8 +72,8 @@ void startProgram(vector<arm> *allArms,int *numArms){
     cout<< endl;
     for (int i=0;i<*numArms;i++)
     {
-        double muValue=generous+(rand()% setMuRange)+crRand;
-        double sigmaValue=rand()% loose+ crRand;
+        double muValue=generous+(rand()% setMuRange)+crRand-crRand;
+        double sigmaValue=rand()% loose+ crRand-crRand;
         
         arm A;
         A.createArm(muValue, sigmaValue);
@@ -119,6 +119,42 @@ void printValues(int * iterations, vector<vector<double>> *allPullValues){
     }
 };
 
+double checkAverage(int* iterations, vector<vector<double>>* allPullValues){
+    double sum=0;
+    for(int i =0;i<allPullValues->size();i++){
+        for(int j=0;j<*iterations;j++){
+            sum = sum + allPullValues->at(i)[j];
+        }
+    }
+    int iter = *iterations;
+    return sum/iter;
+};
+
+int decide(vector<arm> *allArms, int* numArms){
+    
+    int check= -1000;
+    int armToUse;
+    double decide = crRand;
+    double alpha=.1;
+    
+    if(decide>alpha)
+    {
+        cout<<"Greedy action taken "<<decide<< endl;
+        
+    for(int i =0;i<allArms->size();i++){
+        if(check<allArms->at(i).arm::learner){
+            check=allArms->at(i).arm::learner;
+            armToUse=i;
+        }
+    }
+    }
+    else{
+        armToUse= rand()%*numArms;
+        cout<<"random action taken ///////////"<< decide<< endl;
+    };
+    return armToUse;
+};
+
 int main(){
     // Create Variables
     vector<arm> allArms;
@@ -126,20 +162,41 @@ int main(){
     int numArms;
     int iterations;
     char yesNo;
+    double average;
+    
     
     // Function to prompt user and create all arms
     startProgram(&allArms, &numArms);
-    checkArms(&numArms,&iterations,&allArms, &allPullValues);
-    printValues(&iterations, &allPullValues);
+    
+    for(int i=1; i<10;i++){
+    cout<<decide(&allArms, &numArms)<<endl;
+    };
     
     
-    while(yesNo!='n'&&yesNo!='N'){
+    
+    
+    
+    
+    
+    
+
+    //FUCNTION ITERATES THROUGH SET NUMBER OF PULLS ON EACH ARM checkArms(&numArms,&iterations,&allArms, &allPullValues);
+    
+    // FUNCTION PRINTS ALL PULLED VALUES  printValues(&iterations, &allPullValues);
+    // FUNCTION CHECKS AVERAGE    average=checkAverage(&iterations, &allPullValues);
+    
+
+    /*
+     
+     User function - CREATES USER INTERFACE TO REENACT A SLOT MACHINE
+     
+     while(yesNo!='n'&&yesNo!='N'){
     pullArm(&allArms, &numArms);
     cout<< "Would you like to choose another arm? type Y or N ";
         cin>>yesNo;
         cout<<endl;
         }
-    
+    */
     
     return 0;
 }
