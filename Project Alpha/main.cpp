@@ -169,14 +169,16 @@ void react(vector<arm> *allArms, double *result, int *armNumber){
 };
 
 // Agent runs through each decide act react scenario to determine best resulted outcome and saves information in vector
-void agentDoYoThang(vector<arm> &allArms, int &numArms,vector<double> *results){
+int agentDoYoThang(vector<arm> &allArms, int &numArms,vector<double> *results){
+    int armNumber;
     for(int i=1; i<10000;i++){
-        int armNumber=decide(&allArms, &numArms);
+        armNumber=decide(&allArms, &numArms);
         double result = act(&allArms, &armNumber);
         react(&allArms, &result, &armNumber);
         cout<<"Your MAB pulled arm " << armNumber+1 <<" and won a value of "<< result<< " dollars."<< endl;
         results->push_back(result);
     };
+    return armNumber;
 };
 
 // outputs file to .txt file which can be used to paste info into excel
@@ -205,16 +207,46 @@ void userPlay(vector<arm> &allArms, int &numArms){
 void testA(int iterations, vector<vector<double>>* allPullValues, vector<arm> *allArms){
     double sum=0;
     int armNumber;
+    
     cout<<"Which arm would you like to test to see if the average converges properly? ";
     cin>> armNumber;
+    while(armNumber>allArms->size()){
+        cout<<"Sorry, this arm is not within the range of created arms. You may choose between 1 and "<< allArms->size()<<endl;
+            cout<<"Let me ask you again. Which arm would you like to test to see if the average converges properly?  ";
+        cin>>armNumber;
+    }
+    
     for(int j=0;j<iterations;j++){
         sum = sum + allPullValues->at(armNumber-1)[j];
     }
     
     cout<< endl << "Calculated average pull for arm "<< armNumber << " is "<< sum/iterations<<".";
     cout<< endl << "Pre-Determined mu value for arm "<< armNumber << " is "<< allArms->at(armNumber-1).arm::muValue<<".";
-    assert(allArms->at(armNumber-1).arm::muValue<=(sum/iterations)*1.001&&allArms->at(armNumber-1).arm::muValue>=(sum/iterations)*.99);
+    assert(allArms->at(armNumber-1).arm::muValue<=(sum/iterations)*1.01&&allArms->at(armNumber-1).arm::muValue>=(sum/iterations)*.99);
     cout<< endl << "Well the program didn't crash, so it looks like you're good to go."<<endl;
+};
+
+// Test B - If obvious best choice is available, prove after many pulls that this arm will be chosen a majority of the time
+void testB(vector<vector<double>> *allPullValues, vector<arm> *allArms,int armNumber){
+    
+    cout<<endl<< "Please review the following data values to match with calculated best option";
+    for(int i =0;i<allPullValues->size();i++){
+        cout<<endl<< "Your mean value for arm "<< i+1 << " is: "<< allArms->at(i).arm::muValue << endl;
+        cout << "Your sigma value for arm "<< i +1<< " is: "<< allArms->at(i).arm::sigmaValue << endl ;
+        cout<< endl << "Next values "<< endl;
+    }
+    int test=-1;
+    int check;
+    for(int i =0;i<allPullValues->size();i++){
+    if(allArms->at(i).arm::learner>test){
+        test=allArms->at(i).arm::learner;
+        check = i;
+    }
+    }
+    cout<< "Final ending value for best arm based on the learner: " << check +1<< endl;
+    cout<< "Final ending value from running code: "<< armNumber+1 <<endl;
+    assert(check==armNumber);
+    cout<<"Looks like we check out yet again. Test B is good to go!"<<endl;
 };
 
 int main(){
@@ -224,22 +256,18 @@ int main(){
     vector<double> results;
     
     int numArms;
+    int armNumber;
     int iterations=10000;
 
     startProgram(&allArms, &numArms);
     checkArms(&numArms,iterations,&allArms, &allPullValues);
-    //printValues(iterations, &allPullValues, &allArms);
-    //agentDoYoThang(allArms, numArms,&results);
-    //createFile(&results);
-    //userPlay(allArms,numArms);
+    printValues(iterations, &allPullValues, &allArms);
+    armNumber = agentDoYoThang(allArms, numArms,&results);
+    createFile(&results);
+    userPlay(allArms,numArms);
     testA(iterations, &allPullValues, &allArms);
+    testB(&allPullValues, &allArms,armNumber);
     return 0;
 }
-
-
-
-
-
-
 
 
