@@ -63,9 +63,9 @@ void arm::createArm(double mu, double sigma){
 
 void startProgram(vector<arm> *allArms,int *numArms){
     srand(time(NULL));
-    int generous=30;
-    int loose = 15;
-    int setMuRange = 50.0;
+    int generous=5;
+    int loose = 20;
+    int setMuRange = 10.0;
 
     cout<< "How many arms would you like to create for this saucy little bandit? ";
     cin>>*numArms;
@@ -94,13 +94,12 @@ void pullArm(vector<arm> *allArms,int *numArms){
     cout<<"You made "<< result << "dollars." << endl;
 };
 
-void checkArms(int *numArms,int*iterations, vector<arm> *allArms, vector<vector<double>>*allPullValues){
+void checkArms(int *numArms,int iterations, vector<arm> *allArms, vector<vector<double>>*allPullValues){
     
-    *iterations = 100;
     for(int i=0; i<*numArms; i++)
     {
         vector<double> pullValues;
-        for(int j=0; j<=*iterations; j++)
+        for(int j=0; j<=iterations; j++)
         {
             double result= pullValue(allArms->at(i).arm::muValue,allArms->at(i).arm::sigmaValue);
             pullValues.push_back(result);
@@ -109,13 +108,14 @@ void checkArms(int *numArms,int*iterations, vector<arm> *allArms, vector<vector<
     }
 };
 
-void printValues(int * iterations, vector<vector<double>> *allPullValues){
-
+void printValues(int iterations, vector<vector<double>> *allPullValues, vector<arm> *allArms){
     for(int i =0;i<allPullValues->size();i++){
-        for(int j=0;j<*iterations;j++){
+        /*for(int j=0;j<iterations;j++){
             cout<<allPullValues->at(i)[j] << " / ";
-        }
-        cout<< endl << "Next set "<< endl << endl;
+        } */
+        cout<<endl <<endl<< "Your mean value for arm "<< i+1 << " is: "<< allArms->at(i).arm::muValue << endl;
+        cout << "Your sigma value for arm "<< i +1<< " is: "<< allArms->at(i).arm::sigmaValue << endl ;
+        cout<< endl << "Next set "<< endl;
     }
 };
 
@@ -139,7 +139,7 @@ int decide(vector<arm> *allArms, int* numArms){
     
     if(decide>alpha)
     {
-        cout<<"Greedy action taken "<<decide<< endl;
+        cout<<"Greedy action taken "<< endl;
         
     for(int i =0;i<allArms->size();i++){
         if(check<allArms->at(i).arm::learner){
@@ -150,9 +150,19 @@ int decide(vector<arm> *allArms, int* numArms){
     }
     else{
         armToUse= rand()%*numArms;
-        cout<<"random action taken ///////////"<< decide<< endl;
+        cout<<"random action taken ///////////"<< endl;
     };
     return armToUse;
+};
+
+double act(vector<arm>* allArms, int *armNumber){
+    double result= pullValue(allArms->at(*armNumber).arm::muValue,allArms->at( *armNumber ).arm::sigmaValue);
+    return result;
+};
+
+void react(vector<arm> *allArms, double *result, int *armNumber){
+    double alpha=.08;
+    allArms->at( *armNumber ).arm::learner = *result * alpha + (allArms->at( *armNumber ).arm::learner) * (1-alpha);
 };
 
 int main(){
@@ -160,17 +170,25 @@ int main(){
     vector<arm> allArms;
     vector<vector<double>> allPullValues;
     int numArms;
-    int iterations;
+    int iterations=100;
     char yesNo;
     double average;
-    
+    char wait;
     
     // Function to prompt user and create all arms
     startProgram(&allArms, &numArms);
+    checkArms(&numArms,iterations,&allArms, &allPullValues);
+    printValues(iterations, &allPullValues, &allArms);
     
-    for(int i=1; i<10;i++){
-    cout<<decide(&allArms, &numArms)<<endl;
-    };
+    cout<<"would you like to continue? "<< endl;
+    cin>> wait;
+    
+  for(int i=1; i<100000;i++){
+        int armNumber=decide(&allArms, &numArms);
+        double result = act(&allArms, &armNumber);
+        react(&allArms, &result, &armNumber);
+        cout<<"Your MAB pulled arm " << armNumber+1 << endl;
+  };
     
     
     
