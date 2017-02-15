@@ -130,19 +130,10 @@ void printValues(int iterations, vector<vector<double>> *allPullValues, vector<a
     cin>> wait;
 };
 
-// Checks that the desired arm pull values converge to
-double checkAverage(int iterations, vector<vector<double>>* allPullValues, int armNumber){
-    double sum=0;
-        for(int j=0;j<iterations;j++){
-            sum = sum + allPullValues->at(armNumber)[j];
-        }
-    return sum/iterations;
-};
-
 // Decide which arm to pull based on 10% exploration and 90% being a greedy mongrel
 int decide(vector<arm> *allArms, int* numArms){
     
-    int check= -1000;
+    int check= -10;
     int armToUse;
     double decide = crRand;
     double exploreRate=.1;
@@ -210,6 +201,22 @@ void userPlay(vector<arm> &allArms, int &numArms){
     
 };
 
+// Test A - Average of pulls converges to created mean value
+void testA(int iterations, vector<vector<double>>* allPullValues, vector<arm> *allArms){
+    double sum=0;
+    int armNumber;
+    cout<<"Which arm would you like to test to see if the average converges properly? ";
+    cin>> armNumber;
+    for(int j=0;j<iterations;j++){
+        sum = sum + allPullValues->at(armNumber-1)[j];
+    }
+    
+    cout<< endl << "Calculated average pull for arm "<< armNumber << " is "<< sum/iterations<<".";
+    cout<< endl << "Pre-Determined mu value for arm "<< armNumber << " is "<< allArms->at(armNumber-1).arm::muValue<<".";
+    assert(allArms->at(armNumber-1).arm::muValue<=(sum/iterations)*1.001&&allArms->at(armNumber-1).arm::muValue>=(sum/iterations)*.99);
+    cout<< endl << "Well the program didn't crash, so it looks like you're good to go."<<endl;
+};
+
 int main(){
     // Create Variables
     vector<arm> allArms;
@@ -217,16 +224,15 @@ int main(){
     vector<double> results;
     
     int numArms;
-    int iterations=100;
-    
-    double average;
+    int iterations=10000;
 
     startProgram(&allArms, &numArms);
     checkArms(&numArms,iterations,&allArms, &allPullValues);
-    printValues(iterations, &allPullValues, &allArms);
-    agentDoYoThang(allArms, numArms,&results);
-    createFile(&results);
-    userPlay(allArms,numArms);
+    //printValues(iterations, &allPullValues, &allArms);
+    //agentDoYoThang(allArms, numArms,&results);
+    //createFile(&results);
+    //userPlay(allArms,numArms);
+    testA(iterations, &allPullValues, &allArms);
     return 0;
 }
 
