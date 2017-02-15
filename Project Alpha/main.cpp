@@ -31,6 +31,8 @@ public:
 };
 
 // Following function: 'pullArm' copied directly from wiki - Box Muller Transform - No credit taken
+// Found from following location: https://en.wikipedia.org/wiki/Box–Muller_transform
+// Function actions: Creates a random value given a normal distrubtion after a mean and standard deviation are given
 double pullValue(double mu, double sigma){
     const double epsilon = std::numeric_limits<double>::min();
     const double two_pi = 2.0*3.14159265358979323846;
@@ -54,18 +56,19 @@ double pullValue(double mu, double sigma){
     z1 = sqrt(-2.0 * log(u1)) * sin(two_pi * u2);
     return z0 * sigma + mu;
 }
-
+// Fucntion actions: initializes arm with its starting mean, sigma and learning value
 void arm::createArm(double mu, double sigma){
     muValue = mu;
     sigmaValue = sigma;
     learner = 1-crRand+crRand;
 };
 
+//Function actions: determines the generosity and looseness of each slot machine arm. Prompts user for number of arms and creates said number of arms.
 void startProgram(vector<arm> *allArms,int *numArms){
     srand(time(NULL));
-    int generous=5;
-    int loose = 20;
-    int setMuRange = 10.0;
+    int generous=0;
+    int loose = 10;
+    int setMuRange = 80.0;
 
     cout<< "How many arms would you like to create for this saucy little bandit? ";
     cin>>*numArms;
@@ -81,10 +84,11 @@ void startProgram(vector<arm> *allArms,int *numArms){
     }
 };
 
+// Allows user to select which arm they would like to pull, then outputs the winning values to user.
 void pullArm(vector<arm> *allArms,int *numArms){
     int pull;
     
-    cout<<"Which arm would you like to pull? ";
+    cout<< endl <<"Which arm would you like to pull? ";
     cin>>pull;
     while(pull>*numArms){
         cout<<"Sorry, this arm is not within the range of created arms. You may choose between 1 and "<< *numArms<<endl;
@@ -94,6 +98,7 @@ void pullArm(vector<arm> *allArms,int *numArms){
     cout<<"You made "<< result << "dollars." << endl;
 };
 
+// Checks the values of created arms and places data into a vector which printValues() can then call upon
 void checkArms(int *numArms,int iterations, vector<arm> *allArms, vector<vector<double>>*allPullValues){
     
     for(int i=0; i<*numArms; i++)
@@ -108,36 +113,41 @@ void checkArms(int *numArms,int iterations, vector<arm> *allArms, vector<vector<
     }
 };
 
+// Prints data from checkArms() vectors along with the created mean and sigma values for user to verify
 void printValues(int iterations, vector<vector<double>> *allPullValues, vector<arm> *allArms){
+    
+    char wait;
+    
     for(int i =0;i<allPullValues->size();i++){
-        /*for(int j=0;j<iterations;j++){
+        for(int j=0;j<iterations;j++){
             cout<<allPullValues->at(i)[j] << " / ";
-        } */
+        }
         cout<<endl <<endl<< "Your mean value for arm "<< i+1 << " is: "<< allArms->at(i).arm::muValue << endl;
         cout << "Your sigma value for arm "<< i +1<< " is: "<< allArms->at(i).arm::sigmaValue << endl ;
         cout<< endl << "Next set "<< endl;
     }
+    cout<<"would you like to continue? ";
+    cin>> wait;
 };
 
-double checkAverage(int* iterations, vector<vector<double>>* allPullValues){
+// Checks that the desired arm pull values converge to
+double checkAverage(int iterations, vector<vector<double>>* allPullValues, int armNumber){
     double sum=0;
-    for(int i =0;i<allPullValues->size();i++){
-        for(int j=0;j<*iterations;j++){
-            sum = sum + allPullValues->at(i)[j];
+        for(int j=0;j<iterations;j++){
+            sum = sum + allPullValues->at(armNumber)[j];
         }
-    }
-    int iter = *iterations;
-    return sum/iter;
+    return sum/iterations;
 };
 
+// Decide which arm to pull based on 10% exploration and 90% being a greedy mongrel
 int decide(vector<arm> *allArms, int* numArms){
     
     int check= -1000;
     int armToUse;
     double decide = crRand;
-    double alpha=.1;
+    double exploreRate=.1;
     
-    if(decide>alpha)
+    if(decide>exploreRate)
     {
         cout<<"Greedy action taken "<< endl;
         
@@ -155,67 +165,68 @@ int decide(vector<arm> *allArms, int* numArms){
     return armToUse;
 };
 
+// Pulls the arm based on the decision from decide()
 double act(vector<arm>* allArms, int *armNumber){
     double result= pullValue(allArms->at(*armNumber).arm::muValue,allArms->at( *armNumber ).arm::sigmaValue);
     return result;
 };
 
+// updates value of pull each time the act() function is used in order to learn
 void react(vector<arm> *allArms, double *result, int *armNumber){
-    double alpha=.08;
+    double alpha=.1;
     allArms->at( *armNumber ).arm::learner = *result * alpha + (allArms->at( *armNumber ).arm::learner) * (1-alpha);
+};
+
+// Agent runs through each decide act react scenario to determine best resulted outcome and saves information in vector
+void agentDoYoThang(vector<arm> &allArms, int &numArms,vector<double> *results){
+    for(int i=1; i<10000;i++){
+        int armNumber=decide(&allArms, &numArms);
+        double result = act(&allArms, &armNumber);
+        react(&allArms, &result, &armNumber);
+        cout<<"Your MAB pulled arm " << armNumber+1 <<" and won a value of "<< result<< " dollars."<< endl;
+        results->push_back(result);
+    };
+};
+
+// outputs file to .txt file which can be used to paste info into excel
+void createFile(vector<double> *results){
+    ofstream allResults;
+    allResults.open("slotResults.txt");
+    for(int i =0;i<results->size();i++){
+        allResults << results->at(i)  <<"\n";
+    }
+    allResults.close();
+};
+
+// allows user to pull whichever created arm they'd like to test the system
+void userPlay(vector<arm> &allArms, int &numArms){
+    char yesNo;
+    while(yesNo!='n'&&yesNo!='N'){
+        pullArm(&allArms, &numArms);
+        cout<< endl << "You feelin' lucky punk? type Y or N ";
+        cin>>yesNo;
+        cout<<endl;
+    }
+    
 };
 
 int main(){
     // Create Variables
     vector<arm> allArms;
     vector<vector<double>> allPullValues;
+    vector<double> results;
+    
     int numArms;
     int iterations=100;
-    char yesNo;
-    double average;
-    char wait;
     
-    // Function to prompt user and create all arms
+    double average;
+
     startProgram(&allArms, &numArms);
     checkArms(&numArms,iterations,&allArms, &allPullValues);
     printValues(iterations, &allPullValues, &allArms);
-    
-    cout<<"would you like to continue? "<< endl;
-    cin>> wait;
-    
-  for(int i=1; i<100000;i++){
-        int armNumber=decide(&allArms, &numArms);
-        double result = act(&allArms, &armNumber);
-        react(&allArms, &result, &armNumber);
-        cout<<"Your MAB pulled arm " << armNumber+1 << endl;
-  };
-    
-    
-    
-    
-    
-    
-    
-    
-
-    //FUCNTION ITERATES THROUGH SET NUMBER OF PULLS ON EACH ARM checkArms(&numArms,&iterations,&allArms, &allPullValues);
-    
-    // FUNCTION PRINTS ALL PULLED VALUES  printValues(&iterations, &allPullValues);
-    // FUNCTION CHECKS AVERAGE    average=checkAverage(&iterations, &allPullValues);
-    
-
-    /*
-     
-     User function - CREATES USER INTERFACE TO REENACT A SLOT MACHINE
-     
-     while(yesNo!='n'&&yesNo!='N'){
-    pullArm(&allArms, &numArms);
-    cout<< "Would you like to choose another arm? type Y or N ";
-        cin>>yesNo;
-        cout<<endl;
-        }
-    */
-    
+    agentDoYoThang(allArms, numArms,&results);
+    createFile(&results);
+    userPlay(allArms,numArms);
     return 0;
 }
 
