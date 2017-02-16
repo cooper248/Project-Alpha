@@ -189,9 +189,11 @@ void createFile(int* numArms,int iterations, vector<vector<double>> *allResults)
 // allows user to pull whichever created arm they'd like to test the system
 void userPlay(vector<arm> &allArms, int &numArms){
         char yesNo;
+    cout<<"It's time for some user interaction. Would you like to play? Y/N: ";
+    cin>> yesNo;
         while(yesNo!='n'&&yesNo!='N'){
                 pullArm(&allArms, &numArms);
-                cout<< endl << "You feelin' lucky punk? type Y or N ";
+                cout<< endl << "You feelin' lucky punk? Well... do ya? Y/N ";
                 cin>>yesNo;
                 cout<<endl;
             }
@@ -222,14 +224,20 @@ void testA(int iterations, vector<vector<double>>* allPullValues, vector<arm> *a
 };
 
 // Test B - If obvious best choice is available, prove after many pulls that this arm will be chosen a majority of the time
-void testB(vector<vector<double>> *allPullValues, vector<arm> *allArms,int armNumber){
-        
-        cout<<endl<< "Please review the following data values to match with calculated best option";
+void testB(vector<vector<double>> *allPullValues, vector<arm> *allArms,int armNumber, vector<vector<double>>*allActionPercentages, int iterations){
+    char enter;
+    cout<<"Enter any key to continue to Test B: "<<endl;
+    cin>>enter;
+        cout<<endl<< "Please review the following data values to match with calculated best option"<<endl;
         for(int i =0;i<allPullValues->size();i++){
                 cout<<endl<< "Your mean value for arm "<< i+1 << " is: "<< allArms->at(i).arm::muValue << endl;
                 cout << "Your sigma value for arm "<< i +1<< " is: "<< allArms->at(i).arm::sigmaValue << endl ;
                 cout<< endl << "Next values "<< endl;
+        
+        
             }
+    cout<<"Do you think you know which arm should be pulled? Press any character to continue: ";
+    cin>>enter;
         int test=-1;
         int check;
         for(int i =0;i<allPullValues->size();i++){
@@ -238,9 +246,19 @@ void testB(vector<vector<double>> *allPullValues, vector<arm> *allArms,int armNu
                         check = i;
                     }
         }
+    int tester=-10;
+    int testTwo;
+    for (int j = 0;j<allArms->size();j++)
+    {
+        if(tester<allActionPercentages->at(iterations-1)[j]){
+            tester=allActionPercentages->at(iterations-1)[j];
+            testTwo = j;
+        }
+    }
+    
         cout<< "Final ending value for best arm based on the learner: " << check +1<< endl;
-        cout<< "Final ending value from running code: "<< armNumber+1 <<endl;
-        assert(check==armNumber);
+        cout<< "Final ending value from running code: "<< testTwo+1 <<endl;
+        assert(check==testTwo);
         cout<<"Looks like we check out yet again. Test B is good to go!"<<endl;
 };
 
@@ -297,7 +315,7 @@ int main(){
         
         int numArms;
         int armNumber;
-        int iterations=1000;
+        int iterations=5000;
     
         startProgram(&allArms, &numArms);
         checkArms(&numArms,iterations,&allArms, &allPullValues);
@@ -316,23 +334,16 @@ int main(){
                 allArmsChosen.push_back(armsChosen);
                 results.clear();
                 armsChosen.clear();
-                
-                
-                    /*for(int i=0;i<allArms.size();i++){
-                                     allArms.at(i).arm::learner = crRand;
-                                     //cout<<"Learner reset to: "<< allArms.at(i).arm::learner<< endl;
-                                 }
-                                  */
-                cout<<"Final learner value: "<<allArms.at(numArms-1).arm::learner<< endl;
+               
                 
             }
         
         
         createFile(&numArms, iterations, &allResults);
-        //userPlay(allArms,numArms);
+        userPlay(allArms,numArms);
         testA(iterations, &allPullValues, &allArms);
         actionCurves(&allArms, &allArmsChosen,&numArms,iterations,&allActionPercentages,&actionPercentage);
-        testB(&allPullValues, &allArms,armNumber);
+        testB(&allPullValues, &allArms, armNumber, &allActionPercentages, iterations);
         return 0;
 }
 
